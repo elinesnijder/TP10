@@ -27,7 +27,8 @@ def adc_hamburguer():
     data = request.get_json()
     nome_hamburguer = data["nome_hamburguer"]
     ingredientes = data["ingredientes"]
-    query_db("INSERT INTO Hamburguers (nome_hamburguer, ingredientes) VALUES (?, ?)", [nome_hamburguer, ingredientes])
+    preco = data["preco"]
+    query_db("INSERT INTO Hamburguers (nome_hamburguer, ingredientes, preco) VALUES (?, ?, ?)", [nome_hamburguer, ingredientes, preco])
     return jsonify({"message": "Hamburguer adicionado com sucesso!"}), 201
 
 @app.route("/Pedidos", methods=["POST"])

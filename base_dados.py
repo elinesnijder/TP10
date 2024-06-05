@@ -30,6 +30,19 @@ CREATE TABLE
     );
 """
 
+data_hamburguers = [
+    ('Hamburguer Simples', 'Pão, Carne de Vaca, Pickles, Cebola, Ketchup, Mostarda'),
+    ('Cheeseburguer', 'Pão, Carne de Vaca, Queijo Cheddar, Pickles, Cebola, Ketchup, Mostarda'),
+    ('Big Mac', 'Pão, Carne de Vaca, Queijo Cheddar, Pickles, Alface, Molho Irresistível'),
+    ('CBO', 'Pão Macio, Panado de Frango, Cebola Estaladiça, Bacon, Queijo, Bacon'),
+    ('McRoyal Bacon', 'Pão, Carne de Vaca, Bacon, Molho McBacon'),
+    ('McRoyal Cheese', 'Pão, Queijo Cheddar, Pickles, Cebola, Ketchup, Mostarda'),
+    ('Mc Chicken', 'Pão, Filete de Frango, Alface, Maionese')
+]
+
 with sqlite3.connect('hamburgueria.db') as conn:
     cursor = conn.cursor()
     cursor.executescript(sql)
+    
+    cursor.executemany('INSERT INTO Hamburguers (nome_hamburguer, ingredientes) VALUES (?,?)', data_hamburguers)
+    conn.commit()

@@ -1,83 +1,90 @@
 from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.uix.textinput import TextInput
-from kivy.uix.spinner import Spinner
-import requests
+import sqlite3
 
-class MyWidget(BoxLayout):
+
+class WelcomeScreen(Screen):
     def __init__(self, **kwargs):
-        super(MyWidget, self).__init__(**kwargs)
-        self.orientation = 'vertical'
-        
-        self.add_widget(Label(text='Nome do Cliente:'))
-        self.nome_cliente = TextInput()
-        self.add_widget(self.nome_cliente)
-        
-        self.add_widget(Label(text='Morada:'))
-        self.morada = TextInput()
-        self.add_widget(self.morada)
-        
-        self.add_widget(Label(text='Telefone:'))
-        self.telefone = TextInput()
-        self.add_widget(self.telefone)
-        
-        self.add_widget(Label(text='Hamburguer:'))
-        self.spinner_hamburguer = Spinner()
-        self.add_widget(self.spinner_hamburguer)
-        
-        self.add_widget(Label(text='Quantidade:'))
-        self.quantidade = TextInput()
-        self.add_widget(self.quantidade)
-        
-        self.add_widget(Label(text='Tamanho (infantil, normal, duplo):'))
-        self.tamanho = TextInput()
-        self.add_widget(self.tamanho)
-        
-        self.add_widget(Label(text='Total:'))
-        self.valor_total = TextInput()
-        self.add_widget(self.valor_total)
-        
-        self.submit_button = Button(text='Registrar Pedido')
-        self.submit_button.bind(on_press=self.submit)
-        self.add_widget(self.submit_button)
-        
-        self.populate_spinner()
-        
-    def populate_spinner(self):
-        response = requests.get('http://127.0.0.1:5000/Hamburguers')
-        if response.status_code == 200:
-            hamburguers = [hamburguer[0] for hamburguer in response.json()]
-            self.spinner_hamburguer.values = hamburguers
-            
-    def submit(self, instance):
-        cliente_data = {
-            'nome': self.nome_cliente.text,
-            'morada': self.morada.text,
-            'telefone': self.telefone.text,
-        }
-        response = requests.post('http://127.0.0.1:5000/Clientes', json=cliente_data)
-        if response.status_code == 201:
-            id_cliente = response.json().get('id_cliente')
-            pedidos_data = {
-                'id_cliente': id_cliente,
-                'nome_hamburguer': self.spinner_hamburguer.text,
-                'quantidade': int(self.quantidade.text),
-                'tamanho': self.tamanho.text,
-                'valor_total': float(self.valor_total.text)
-            }
-            response_pedido = requests.post('http://127.0.0.1:5000/pedidos', json=pedidos_data)
-            if response_pedido.status_code == 201:
-                print("Pedido registrado com sucesso!")
-            else:
-                print("Erro ao registrar pedido.")
+        super(WelcomeScreen, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        welcome_label = Label(text='Bem-vindo')
+        start_button = Button(text='Começar')
+        start_button.bind(on_press=self.go_to_order_screen)
+        layout.add_widget(welcome_label)
+        layout.add_widget(start_button)
+        self.add_widget(layout)
+
+    def go_to_order_screen(self, instance):
+        self.manager.current = 'order'
+
+
+class OrderScreen(Screen):
+    def __init__(self, **kwargs):
+        super(OrderScreen, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+
+        hamburguers_label = Label(text='Escolha um Hambúrguer:')
+        layout.add_widget(hamburguers_label)
+
+        conn = sqlite3.connect('hamburgueria.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT nome_hamburguer, preco FROM Hamburguers')
+        hamburguers_data = cursor.fetchall()
+        conn.close()
+
+        for hamburguer in hamburguers_data:
+            hamburguer_button = Button(text=f'{hamburguer[0]} - R${hamburguer[1]}',
+                                       size_hint_y=None,
+                                       height=40)
+            hamburguer_button.bind(on_press=self.select_hamburguer)
+            layout.add_widget(hamburguer_button)
+
+        self.add_widget(layout)
+
+    def select_hamburguer(self, instance):
+        hamburguer_name = instance.text.split('-')[0].strip()
+        self.manager.current = 'details' 
+        self.manager.get_screen('details').load_hamburguer_details(hamburguer_name)
+
+
+class HamburguerDetailsScreen(Screen):
+    def __init__(self, **kwargs):
+        super(HamburguerDetailsScreen, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        self.hamburguer_name_label = Label(text='Nome do Hambúrguer:')
+        self.hamburguer_ingredients_label = Label(text='Ingredientes:')
+        self.hamburguer_price_label = Label(text='Preço:')
+        layout.add_widget(self.hamburguer_name_label)
+        layout.add_widget(self.hamburguer_ingredients_label)
+        layout.add_widget(self.hamburguer_price_label)
+        self.add_widget(layout)
+
+    def load_hamburguer_details(self, hamburguer_name):
+        conn = sqlite3.connect('hamburgueria.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT ingredientes, preco FROM Hamburguers WHERE nome_hamburguer=?', (hamburguer_name,))
+        hamburguer_data = cursor.fetchone()
+        conn.close()
+
+        if hamburguer_data:
+            self.hamburguer_name_label.text = f'Nome do Hambúrguer: {hamburguer_name}'
+            self.hamburguer_ingredients_label.text = f'Ingredientes: {hamburguer_data[0]}'
+            self.hamburguer_price_label.text = f'Preço: R${hamburguer_data[1]}'
         else:
-            print("Erro ao registrar cliente.")
-            
+            self.hamburguer_name_label.text = 'Erro ao carregar detalhes do hambúrguer.'
+
+
 class MyApp(App):
     def build(self):
-        return MyWidget()
-    
+        sm = ScreenManager()
+        sm.add_widget(WelcomeScreen(name='welcome'))
+        sm.add_widget(OrderScreen(name='order'))
+        sm.add_widget(HamburguerDetailsScreen(name='details'))
+        return sm
+
+
 if __name__ == '__main__':
     MyApp().run()

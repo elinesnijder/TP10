@@ -5,6 +5,7 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.textinput import TextInput
 import sqlite3
 
 
@@ -26,10 +27,14 @@ class WelcomeScreen(Screen):
 class OrderScreen(Screen):
     def __init__(self, **kwargs):
         super(OrderScreen, self).__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical')
+        self.layout = BoxLayout(orientation='vertical')
+        self.add_widget(self.layout)
+        self.populate_hamburguers()
 
+    def populate_hamburguers(self):
+        self.layout.clear_widgets()
         hamburguers_label = Label(text='Escolha um Hambúrguer:')
-        layout.add_widget(hamburguers_label)
+        self.layout.add_widget(hamburguers_label)
 
         # Conectar ao banco de dados e recuperar os hambúrgueres
         conn = sqlite3.connect('hamburgueria.db')
@@ -43,9 +48,12 @@ class OrderScreen(Screen):
                                        size_hint_y=None,
                                        height=40)
             hamburguer_button.bind(on_press=self.select_hamburguer)
-            layout.add_widget(hamburguer_button)
+            self.layout.add_widget(hamburguer_button)
 
-        self.add_widget(layout)
+        # Adiciona um botão para revisar o pedido
+        review_button = Button(text='Revisar Pedido')
+        review_button.bind(on_press=self.review_order)
+        self.layout.add_widget(review_button)
 
     def select_hamburguer(self, instance):
         hamburguer_name = instance.text.split('-')[0].strip()  # Pega apenas o nome do hambúrguer
@@ -54,6 +62,9 @@ class OrderScreen(Screen):
         details_screen = self.manager.get_screen('details')
         details_screen.load_hamburguer_details(hamburguer_name)
         details_screen.previous_screen = self.name  # Armazena o nome da tela anterior
+
+    def review_order(self, instance):
+        self.manager.current = 'review'
 
 
 class HamburguerDetailsScreen(Screen):
@@ -79,6 +90,7 @@ class HamburguerDetailsScreen(Screen):
 
     def load_hamburguer_details(self, hamburguer_name):
         # Conectar ao banco de dados e recuperar os detalhes do hambúrguer
+        self.hamburguer_name = hamburguer_name
         conn = sqlite3.connect('hamburgueria.db')
         cursor = conn.cursor()
         cursor.execute('SELECT ingredientes, preco FROM Hamburguers WHERE nome_hamburguer=?', (hamburguer_name,))
@@ -100,11 +112,14 @@ class HamburguerDetailsScreen(Screen):
     def continue_order(self, instance):
         # Adicionando a seleção do tamanho
         self.layout.clear_widgets()  # Limpa os widgets atuais
+        type_label = Label(text=f'Tipo de Hambúrguer: {self.hamburguer_name}')
+        self.layout.add_widget(type_label)
+
         size_label = Label(text='Selecione o tamanho do hambúrguer:')
-        size_spinner = Spinner(text='Infantil', values=('Infantil', 'Normal', 'Duplo'))
-        size_layout = GridLayout(cols=3)
+        self.size_spinner = Spinner(text='Escolha o tamanho', values=('infantil', 'normal', 'duplo'))
+        size_layout = GridLayout(cols=2)
         size_layout.add_widget(size_label)
-        size_layout.add_widget(size_spinner)
+        size_layout.add_widget(self.size_spinner)
         self.layout.add_widget(size_layout)
 
         # Botões para selecionar a quantidade
@@ -148,11 +163,102 @@ class HamburguerDetailsScreen(Screen):
         self.total_price_label.text = f'Preço total: R${total_price}'
 
     def confirm_order(self, instance):
-        # Aqui você pode obter o tamanho selecionado, a quantidade e fazer o que for necessário, como adicionar ao pedido
-        selected_size = self.layout.children[2].children[1].text  # O segundo widget do primeiro GridLayout é o Spinner
+        selected_size = self.size_spinner.text  # Obtém o tamanho selecionado do Spinner
         quantity = int(self.quantity_label.text)
         total_price = self.hamburguer_price * quantity
-        print(f'Tamanho selecionado: {selected_size}, Quantidade: {quantity}, Preço total: R${total_price}')
+        order_screen = self.manager.get_screen('order')
+        order_screen.layout.add_widget(Button(text=f'{self.hamburguer_name} - {selected_size} x{quantity} - R${total_price}'))
+        review_screen = self.manager.get_screen('review')
+        review_screen.add_order(f'{self.hamburguer_name} - {selected_size} x{quantity} - R${total_price}', total_price)
+        self.manager.current = 'order'
+
+
+class ReviewOrderScreen(Screen):
+    def __init__(self, **kwargs):
+        super(ReviewOrderScreen, self).__init__(**kwargs)
+        self.layout = BoxLayout(orientation='vertical')
+        self.orders_label = Label(text='Seu Pedido:')
+        self.total_price_label = Label(text='Preço total do pedido: R$0')
+        self.layout.add_widget(self.orders_label)
+        self.layout.add_widget(self.total_price_label)
+        self.add_widget(self.layout)
+        self.orders = []
+        self.total_price = 0
+
+        # Campos para informações do cliente
+        self.name_input = TextInput(hint_text='Nome')
+        self.address_input = TextInput(hint_text='Morada')
+        self.phone_input = TextInput(hint_text='Telemóvel')
+        self.layout.add_widget(self.name_input)
+        self.layout.add_widget(self.address_input)
+        self.layout.add_widget(self.phone_input)
+
+        # Botões de confirmar e voltar
+        self.buttons_layout = BoxLayout(size_hint_y=None, height=50)
+        self.confirm_button = Button(text='Confirmar Pedido')
+        self.back_button = Button(text='Voltar')
+        self.confirm_button.bind(on_press=self.confirm_order)
+        self.back_button.bind(on_press=self.go_back)
+        self.buttons_layout.add_widget(self.back_button)
+        self.buttons_layout.add_widget(self.confirm_button)
+        self.layout.add_widget(self.buttons_layout)
+
+    def add_order(self, order_text, price):
+        self.orders.append(order_text)
+        self.total_price += price
+        self.orders_label.text += f'\n{order_text}'
+        self.total_price_label.text = f'Preço total do pedido: R${self.total_price}'
+
+    def confirm_order(self, instance):
+    # Obtenha os dados do cliente
+        name = self.name_input.text
+        address = self.address_input.text
+        phone = self.phone_input.text
+
+        # Conectar ao banco de dados e salvar o pedido
+        conn = sqlite3.connect('hamburgueria.db')
+        cursor = conn.cursor()
+
+        # Inserir dados do cliente
+        cursor.execute('INSERT INTO Clientes (nome, morada, telefone) VALUES (?, ?, ?)', (name, address, phone))
+        cliente_id = cursor.lastrowid  # Obtenha o ID do cliente recém-inserido
+        print(f"Cliente registrado com ID {cliente_id}")
+
+        # Preparar os dados dos pedidos
+        for order in self.orders:
+            nome_hamburguer = order.split(' - ')[0]
+            quantidade = int(order.split(' x')[1].split(' - ')[0])
+            tamanho = order.split(' - ')[1].lower()  # Converta para minúsculas para facilitar a comparação
+            valor_total = float(order.split(' - ')[2][3:])
+
+            # Verificar se o tamanho é válido
+            if tamanho not in ('infantil', 'normal', 'duplo'):
+                print(f"Tamanho de hambúrguer inválido: {tamanho}. Pedido não foi registrado.")
+                continue  # Pule este pedido e passe para o próximo
+
+            # Inserir dados do pedido
+            cursor.execute('INSERT INTO Pedidos (id_cliente, nome_hamburguer, quantidade, tamanho, valor_total) VALUES (?, ?, ?, ?, ?)',
+                        (cliente_id, nome_hamburguer, quantidade, tamanho, valor_total))
+            pedido_id = cursor.lastrowid  # Obtenha o ID do pedido recém-inserido
+            print(f"Pedido registrado com ID {pedido_id} para o cliente {cliente_id}")
+
+        conn.commit()
+        conn.close()
+
+
+        # Limpar os pedidos e campos de entrada após a confirmação
+        self.orders.clear()
+        self.total_price = 0
+        self.orders_label.text = 'Seu Pedido:'
+        self.total_price_label.text = 'Preço total do pedido: R$0'
+        self.name_input.text = ''
+        self.address_input.text = ''
+        self.phone_input.text = ''
+
+        self.manager.current = 'welcome'
+
+    def go_back(self, instance):
+        self.manager.current = 'order'
 
 
 class MyApp(App):
@@ -161,6 +267,7 @@ class MyApp(App):
         sm.add_widget(WelcomeScreen(name='welcome'))
         sm.add_widget(OrderScreen(name='order'))
         sm.add_widget(HamburguerDetailsScreen(name='details'))
+        sm.add_widget(ReviewOrderScreen(name='review'))
         return sm
 
 

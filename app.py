@@ -27,7 +27,7 @@ def adc_hamburguer():
     data = request.get_json()
     nome_hamburguer = data["nome_hamburguer"]
     ingredientes = data["ingredientes"]
-    preco = data["preco"]
+    preco = data["preco"]  # Adicionando a coluna "preco"
     query_db("INSERT INTO Hamburguers (nome_hamburguer, ingredientes, preco) VALUES (?, ?, ?)", [nome_hamburguer, ingredientes, preco])
     return jsonify({"message": "Hamburguer adicionado com sucesso!"}), 201
 

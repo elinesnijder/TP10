@@ -22,7 +22,7 @@ CREATE TABLE
         id_cliente INTEGER NOT NULL,
         nome_hamburguer TEXT NOT NULL,
         quantidade INTEGER NOT NULL,
-        tamanho TEXT CHECK (tamanho IN ("infantil", "normal", "duplo")),
+        tamanho TEXT CHECK (tamanho IN ('infantil', 'normal', 'duplo')),
         data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
         valor_total REAL NOT NULL,
         FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente),
@@ -30,6 +30,6 @@ CREATE TABLE
     );
 """
 
-with sqlite3.connect("hamburgueria.db") as conn:
+with sqlite3.connect('hamburgueria.db') as conn:
     cursor = conn.cursor()
     cursor.executescript(sql)

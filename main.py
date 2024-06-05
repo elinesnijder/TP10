@@ -14,14 +14,120 @@ class WelcomeScreen(Screen):
         super(WelcomeScreen, self).__init__(**kwargs)
         layout = BoxLayout(orientation='vertical')
         welcome_label = Label(text='Bem-vindo')
-        start_button = Button(text='Começar')
-        start_button.bind(on_press=self.go_to_order_screen)
+        employee_auth_button = Button(text='Autenticação do Funcionário do Call Center')
+        employee_auth_button.bind(on_press=self.go_to_employee_auth)
+        main_system_button = Button(text='Acesso ao Sistema Principal')
+        main_system_button.bind(on_press=self.go_to_main_system)
         layout.add_widget(welcome_label)
-        layout.add_widget(start_button)
+        layout.add_widget(employee_auth_button)
+        layout.add_widget(main_system_button)
         self.add_widget(layout)
 
-    def go_to_order_screen(self, instance):
-        self.manager.current = 'order'
+    def go_to_employee_auth(self, instance):
+        # Limpa a tela atual
+        self.clear_widgets()
+        
+        # Criação de elementos para a autenticação do funcionário
+        auth_layout = BoxLayout(orientation='vertical')
+        username_input = TextInput(hint_text='Nome de usuário')
+        password_input = TextInput(hint_text='Senha', password=True)
+        confirm_button = Button(text='Confirmar')
+        
+        # Função para lidar com a autenticação
+        def authenticate(instance):
+            # Verifica o nome de usuário e a senha
+            if username_input.text == 'admin' and password_input.text == '123456':
+                # Limpa a tela de autenticação e exibe as opções
+                auth_layout.clear_widgets()
+                options_label = Label(text='Selecione uma opção:')
+                view_orders_button = Button(text='Ver Pedidos')
+                view_customers_button = Button(text='Ver Clientes')
+                view_hamburguers_button = Button(text='Ver Hamburguers')
+                
+                # Ações dos botões
+                def view_orders(instance):
+                    # Conectar ao banco de dados e recuperar os pedidos
+                    conn = sqlite3.connect('hamburgueria.db')
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                        SELECT p.id, c.nome, p.nome_hamburguer, p.quantidade, p.tamanho, p.valor_total 
+                        FROM Pedidos p
+                        JOIN Clientes c ON p.id_cliente = c.id
+                    ''')
+                    orders_data = cursor.fetchall()
+                    conn.close()
+
+                    # Adicionar informações dos pedidos ao layout
+                    orders_layout = BoxLayout(orientation='vertical')
+                    for order in orders_data:
+                        order_label = Label(text=f'Pedido ID: {order[0]}, Cliente: {order[1]}, Hambúrguer: {order[2]}, Quantidade: {order[3]}, Tamanho: {order[4]}, Valor: R${order[5]}')
+                        orders_layout.add_widget(order_label)
+
+                    # Limpa a tela atual e adiciona o novo layout
+                    self.clear_widgets()
+                    self.add_widget(orders_layout)
+                
+                def view_customers(instance):
+                    # Implemente a lógica para visualizar os clientes
+                    conn = sqlite3.connect('hamburgueria.db')
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT nome, morada, telefone FROM Clientes')
+                    customers_data = cursor.fetchall()
+                    conn.close()
+
+                    # Adicionar informações dos clientes ao layout
+                    for customer in customers_data:
+                        customer_label = Label(text=f'Nome: {customer[0]}, Morada: {customer[1]}, Telefone: {customer[2]}')
+                        instance.parent.add_widget(customer_label)  # Adiciona ao layout pai da instância (o layout da tela atual)
+
+                
+                def view_hamburguers(instance):
+                   # Conectar ao banco de dados e recuperar os hambúrgueres
+                    conn = sqlite3.connect('hamburgueria.db')
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT nome_hamburguer, ingredientes, preco FROM Hamburguers')
+                    hamburguers_data = cursor.fetchall()
+                    conn.close()
+
+                    # Adicionar informações dos hambúrgueres ao layout
+                    hamburguers_layout = BoxLayout(orientation='vertical')
+                    for hamburguer in hamburguers_data:
+                        hamburguer_label = Label(text=f'Nome: {hamburguer[0]}, Ingredientes: {hamburguer[1]}, Preço: R${hamburguer[2]}')
+                        hamburguers_layout.add_widget(hamburguer_label)
+
+                    # Limpa a tela atual e adiciona o novo layout
+                    self.clear_widgets()
+                    self.add_widget(hamburguers_layout)
+                
+                # Associações de eventos
+                view_orders_button.bind(on_press=view_orders)
+                view_customers_button.bind(on_press=view_customers)
+                view_hamburguers_button.bind(on_press=view_hamburguers)
+                
+                # Adiciona os elementos à tela
+                auth_layout.add_widget(options_label)
+                auth_layout.add_widget(view_orders_button)
+                auth_layout.add_widget(view_customers_button)
+                auth_layout.add_widget(view_hamburguers_button)
+            
+            else:
+                # Exibe uma mensagem de erro se as credenciais forem inválidas
+                invalid_label = Label(text='Credenciais inválidas. Tente novamente.')
+                auth_layout.add_widget(invalid_label)
+
+        # Associa o evento de clique do botão de confirmação com a função de autenticação
+        confirm_button.bind(on_press=authenticate)
+        
+        # Adiciona os elementos à tela
+        auth_layout.add_widget(username_input)
+        auth_layout.add_widget(password_input)
+        auth_layout.add_widget(confirm_button)
+        self.add_widget(auth_layout)
+
+
+    def go_to_main_system(self, instance):
+        self.manager.current = 'order'  # Direciona para o sistema principal
+
 
 
 class OrderScreen(Screen):

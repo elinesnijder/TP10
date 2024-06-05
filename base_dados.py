@@ -4,8 +4,8 @@ import sqlite3
 sql = """
 CREATE TABLE 
     Clientes (
-        id_cliente INTEGER PRIMERY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL
+        id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
         morada TEXT NOT NULL,
         telefone TEXT NOT NULL
     );
@@ -13,7 +13,7 @@ CREATE TABLE
 CREATE TABLE
     Hamburguers (
         nome_hamburguer TEXT PRIMARY KEY,
-        indredientes TEXT NOT NULL
+        ingredientes TEXT NOT NULL
     );
     
 CREATE TABLE
@@ -26,7 +26,7 @@ CREATE TABLE
         data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
         valor_total REAL NOT NULL,
         FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente),
-        FOREIGN KEY (nome_hamburguer) REFERENCES hamburgueres(nome_hamburguer)
+        FOREIGN KEY (nome_hamburguer) REFERENCES hamburguers(nome_hamburguer)
     );
 """
 

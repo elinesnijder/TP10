@@ -19,7 +19,7 @@ def adc_cliente():
     nome = data["nome"]
     morada = data["morada"]
     telefone = data["telefone"]
-    query_db("INSERT INTO Clientes (nome, morada, telefone) VALUES (?, ?, ?)", [nome, morada, telefone])
+    query_db("INSERT INTO Clientes (nome, morada, telefone) VALUES (?, ?, ?)", (nome, morada, telefone))
     return jsonify({"message": "Cliente adicionado com sucesso!"}), 201
 
 @app.route("/Hamburguers", methods=["POST"])
@@ -38,10 +38,8 @@ def adc_pedido():
     quantidade = data["quantidade"]
     tamanho = data["tamanho"]
     valor_total = data["valor_total"]
-    query_db(
-        "INSERT INTO Pedidos (id_cliente, nome_hamburguer, quantidade, tamanho, valor_total) VALUES (?, ?, ?, ?, ?)",
-        [id_cliente, nome_hamburguer, quantidade, tamanho, valor_total]
-    )
+    query_db("INSERT INTO Pedidos (id_cliente, nome_hamburguer, quantidade, tamanho, valor_total) VALUES (?, ?, ?, ?, ?)",
+             [id_cliente, nome_hamburguer, quantidade, tamanho, valor_total])
     return jsonify({"message": "Pedido adicionado com sucesso!"}), 201
 
 @app.route("/Clientes", methods=["GET"])

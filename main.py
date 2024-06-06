@@ -6,6 +6,7 @@ from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
+from kivy.uix.image import Image
 import sqlite3
 
 
@@ -13,14 +14,21 @@ class WelcomeScreen(Screen):
     def __init__(self, **kwargs):
         super(WelcomeScreen, self).__init__(**kwargs)
         layout = BoxLayout(orientation='vertical')
+
+        # Adicionando a imagem
+        image = Image(source='cbo.png')  # Substitua 'welcome_image.png' pelo caminho da sua imagem
+        layout.add_widget(image)
+
         welcome_label = Label(text='Bem-vindo')
         employee_auth_button = Button(text='Autenticação do Funcionário do Call Center')
         employee_auth_button.bind(on_press=self.go_to_employee_auth)
         main_system_button = Button(text='Acesso ao Sistema Principal')
         main_system_button.bind(on_press=self.go_to_main_system)
+
         layout.add_widget(welcome_label)
         layout.add_widget(employee_auth_button)
         layout.add_widget(main_system_button)
+
         self.add_widget(layout)
 
     def go_to_employee_auth(self, instance):

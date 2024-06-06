@@ -128,8 +128,6 @@ class WelcomeScreen(Screen):
     def go_to_main_system(self, instance):
         self.manager.current = 'order'  # Direciona para o sistema principal
 
-
-
 class OrderScreen(Screen):
     def __init__(self, **kwargs):
         super(OrderScreen, self).__init__(**kwargs)

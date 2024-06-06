@@ -6,6 +6,7 @@ from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
+from kivy.uix.image import Image
 import sqlite3
 
 
@@ -13,6 +14,9 @@ class WelcomeScreen(Screen):
     def __init__(self, **kwargs):
         super(WelcomeScreen, self).__init__(**kwargs)
         layout = BoxLayout(orientation='vertical')
+        image = Image(source='cbo.png')
+        layout.add_widget(image)
+
         welcome_label = Label(text='Bem-vindo')
         employee_auth_button = Button(text='Autenticação do Funcionário do Call Center')
         employee_auth_button.bind(on_press=self.go_to_employee_auth)
@@ -24,29 +28,27 @@ class WelcomeScreen(Screen):
         self.add_widget(layout)
 
     def go_to_employee_auth(self, instance):
-        # Limpa a tela atual
+        #Tira o que está no ecrã
         self.clear_widgets()
         
-        # Criação de elementos para a autenticação do funcionário
+        #Elementos da autenticação do funcionário
         auth_layout = BoxLayout(orientation='vertical')
         username_input = TextInput(hint_text='Nome de usuário')
         password_input = TextInput(hint_text='Senha', password=True)
         confirm_button = Button(text='Confirmar')
         
-        # Função para lidar com a autenticação
         def authenticate(instance):
-            # Verifica o nome de usuário e a senha
+            #verifica usuario e pass
             if username_input.text == 'admin' and password_input.text == '123456':
-                # Limpa a tela de autenticação e exibe as opções
+                #mostra as opçoes
                 auth_layout.clear_widgets()
                 options_label = Label(text='Selecione uma opção:')
                 view_orders_button = Button(text='Ver Pedidos')
                 view_customers_button = Button(text='Ver Clientes')
                 view_hamburguers_button = Button(text='Ver Hamburguers')
-                
-                # Ações dos botões
+
+                #açoes dos botoes
                 def view_orders(instance):
-                    # Conectar ao banco de dados e recuperar os pedidos
                     conn = sqlite3.connect('hamburgueria.db')
                     cursor = conn.cursor()
                     cursor.execute('''
@@ -57,68 +59,60 @@ class WelcomeScreen(Screen):
                     orders_data = cursor.fetchall()
                     conn.close()
 
-                    # Adicionar informações dos pedidos ao layout
+                    #mostra informaçoes dos pedidos
                     orders_layout = BoxLayout(orientation='vertical')
                     for order in orders_data:
                         order_label = Label(text=f'Pedido ID: {order[0]}, Cliente: {order[1]}, Hambúrguer: {order[2]}, Quantidade: {order[3]}, Tamanho: {order[4]}, Valor: R${order[5]}')
                         orders_layout.add_widget(order_label)
 
-                    # Limpa a tela atual e adiciona o novo layout
                     self.clear_widgets()
                     self.add_widget(orders_layout)
                 
                 def view_customers(instance):
-                    # Implemente a lógica para visualizar os clientes
+                    #mostra os clientes
                     conn = sqlite3.connect('hamburgueria.db')
                     cursor = conn.cursor()
                     cursor.execute('SELECT nome, morada, telefone FROM Clientes')
                     customers_data = cursor.fetchall()
                     conn.close()
 
-                    # Adicionar informações dos clientes ao layout
                     for customer in customers_data:
                         customer_label = Label(text=f'Nome: {customer[0]}, Morada: {customer[1]}, Telefone: {customer[2]}')
-                        instance.parent.add_widget(customer_label)  # Adiciona ao layout pai da instância (o layout da tela atual)
+                        instance.parent.add_widget(customer_label)  #adiciona a tela atual
 
                 
                 def view_hamburguers(instance):
-                   # Conectar ao banco de dados e recuperar os hambúrgueres
                     conn = sqlite3.connect('hamburgueria.db')
                     cursor = conn.cursor()
                     cursor.execute('SELECT nome_hamburguer, ingredientes, preco FROM Hamburguers')
                     hamburguers_data = cursor.fetchall()
                     conn.close()
 
-                    # Adicionar informações dos hambúrgueres ao layout
                     hamburguers_layout = BoxLayout(orientation='vertical')
                     for hamburguer in hamburguers_data:
                         hamburguer_label = Label(text=f'Nome: {hamburguer[0]}, Ingredientes: {hamburguer[1]}, Preço: R${hamburguer[2]}')
                         hamburguers_layout.add_widget(hamburguer_label)
 
-                    # Limpa a tela atual e adiciona o novo layout
                     self.clear_widgets()
                     self.add_widget(hamburguers_layout)
                 
-                # Associações de eventos
                 view_orders_button.bind(on_press=view_orders)
                 view_customers_button.bind(on_press=view_customers)
                 view_hamburguers_button.bind(on_press=view_hamburguers)
                 
-                # Adiciona os elementos à tela
+                #adiciona os elementos na tela
                 auth_layout.add_widget(options_label)
                 auth_layout.add_widget(view_orders_button)
                 auth_layout.add_widget(view_customers_button)
                 auth_layout.add_widget(view_hamburguers_button)
             
             else:
-                # Exibe uma mensagem de erro se as credenciais forem inválidas
                 invalid_label = Label(text='Credenciais inválidas. Tente novamente.')
                 auth_layout.add_widget(invalid_label)
 
-        # Associa o evento de clique do botão de confirmação com a função de autenticação
+        #clica para a função authenticate
         confirm_button.bind(on_press=authenticate)
         
-        # Adiciona os elementos à tela
         auth_layout.add_widget(username_input)
         auth_layout.add_widget(password_input)
         auth_layout.add_widget(confirm_button)
@@ -126,9 +120,7 @@ class WelcomeScreen(Screen):
 
 
     def go_to_main_system(self, instance):
-        self.manager.current = 'order'  # Direciona para o sistema principal
-
-
+        self.manager.current = 'order'
 
 class OrderScreen(Screen):
     def __init__(self, **kwargs):
@@ -142,7 +134,6 @@ class OrderScreen(Screen):
         hamburguers_label = Label(text='Escolha um Hambúrguer:')
         self.layout.add_widget(hamburguers_label)
 
-        # Conectar ao banco de dados e recuperar os hambúrgueres
         conn = sqlite3.connect('hamburgueria.db')
         cursor = conn.cursor()
         cursor.execute('SELECT nome_hamburguer, preco FROM Hamburguers')
@@ -156,22 +147,19 @@ class OrderScreen(Screen):
             hamburguer_button.bind(on_press=self.select_hamburguer)
             self.layout.add_widget(hamburguer_button)
 
-        # Adiciona um botão para revisar o pedido
         review_button = Button(text='Revisar Pedido')
         review_button.bind(on_press=self.review_order)
         self.layout.add_widget(review_button)
 
     def select_hamburguer(self, instance):
-        hamburguer_name = instance.text.split('-')[0].strip()  # Pega apenas o nome do hambúrguer
-        self.manager.current = 'details'  # Muda para a tela de detalhes do hambúrguer
-        # Passa o nome do hambúrguer para a próxima tela
+        hamburguer_name = instance.text.split('-')[0].strip()  #amrmazena apenas o nome do hamburguer
+        self.manager.current = 'details'
         details_screen = self.manager.get_screen('details')
         details_screen.load_hamburguer_details(hamburguer_name)
-        details_screen.previous_screen = self.name  # Armazena o nome da tela anterior
+        details_screen.previous_screen = self.name  #armazena o nome da tela anterior
 
     def review_order(self, instance):
         self.manager.current = 'review'
-
 
 class HamburguerDetailsScreen(Screen):
     def __init__(self, **kwargs):
@@ -184,7 +172,6 @@ class HamburguerDetailsScreen(Screen):
         self.layout.add_widget(self.hamburguer_ingredients_label)
         self.layout.add_widget(self.hamburguer_price_label)
 
-        # Botões para voltar e continuar
         self.back_button = Button(text='Voltar')
         self.continue_button = Button(text='Continuar')
         self.back_button.bind(on_press=self.go_back)
@@ -195,7 +182,6 @@ class HamburguerDetailsScreen(Screen):
         self.add_widget(self.layout)
 
     def load_hamburguer_details(self, hamburguer_name):
-        # Conectar ao banco de dados e recuperar os detalhes do hambúrguer
         self.hamburguer_name = hamburguer_name
         conn = sqlite3.connect('hamburgueria.db')
         cursor = conn.cursor()
@@ -207,7 +193,7 @@ class HamburguerDetailsScreen(Screen):
             self.hamburguer_name_label.text = f'Nome do Hambúrguer: {hamburguer_name}'
             self.hamburguer_ingredients_label.text = f'Ingredientes: {hamburguer_data[0]}'
             self.hamburguer_price_label.text = f'Preço: R${hamburguer_data[1]}'
-            self.hamburguer_price = hamburguer_data[1]  # Armazena o preço do hambúrguer
+            self.hamburguer_price = hamburguer_data[1]  #armazena o preço
         else:
             self.hamburguer_name_label.text = 'Erro ao carregar detalhes do hambúrguer.'
 
@@ -216,8 +202,8 @@ class HamburguerDetailsScreen(Screen):
             self.manager.current = self.previous_screen
 
     def continue_order(self, instance):
-        # Adicionando a seleção do tamanho
-        self.layout.clear_widgets()  # Limpa os widgets atuais
+        #selecionamento do tamanho
+        self.layout.clear_widgets() 
         type_label = Label(text=f'Tipo de Hambúrguer: {self.hamburguer_name}')
         self.layout.add_widget(type_label)
 
@@ -228,7 +214,7 @@ class HamburguerDetailsScreen(Screen):
         size_layout.add_widget(self.size_spinner)
         self.layout.add_widget(size_layout)
 
-        # Botões para selecionar a quantidade
+        #quantidade com + e -
         quantity_label = Label(text='Selecione a quantidade:')
         self.quantity_label = Label(text='1')
         plus_button = Button(text='+')
@@ -242,7 +228,7 @@ class HamburguerDetailsScreen(Screen):
         quantity_layout.add_widget(plus_button)
         self.layout.add_widget(quantity_layout)
 
-        # Rótulo para mostrar o preço total
+        #preço atual
         self.total_price_label = Label(text=f'Preço total: R${self.hamburguer_price}')
         self.layout.add_widget(self.total_price_label)
 
@@ -269,7 +255,7 @@ class HamburguerDetailsScreen(Screen):
         self.total_price_label.text = f'Preço total: R${total_price}'
 
     def confirm_order(self, instance):
-        selected_size = self.size_spinner.text  # Obtém o tamanho selecionado do Spinner
+        selected_size = self.size_spinner.text  #obtém o tamanho selcionado do spinner
         quantity = int(self.quantity_label.text)
         total_price = self.hamburguer_price * quantity
         order_screen = self.manager.get_screen('order')
@@ -291,7 +277,7 @@ class ReviewOrderScreen(Screen):
         self.orders = []
         self.total_price = 0
 
-        # Campos para informações do cliente
+        # informaçoes cliente
         self.name_input = TextInput(hint_text='Nome')
         self.address_input = TextInput(hint_text='Morada')
         self.phone_input = TextInput(hint_text='Telemóvel')
@@ -299,7 +285,6 @@ class ReviewOrderScreen(Screen):
         self.layout.add_widget(self.address_input)
         self.layout.add_widget(self.phone_input)
 
-        # Botões de confirmar e voltar
         self.buttons_layout = BoxLayout(size_hint_y=None, height=50)
         self.confirm_button = Button(text='Confirmar Pedido')
         self.back_button = Button(text='Voltar')
@@ -316,43 +301,43 @@ class ReviewOrderScreen(Screen):
         self.total_price_label.text = f'Preço total do pedido: R${self.total_price}'
 
     def confirm_order(self, instance):
-    # Obtenha os dados do cliente
+    #obtem dados clientes
         name = self.name_input.text
         address = self.address_input.text
         phone = self.phone_input.text
 
-        # Conectar ao banco de dados e salvar o pedido
+        # Conectar e salva o pedido ao banco de dados
         conn = sqlite3.connect('hamburgueria.db')
         cursor = conn.cursor()
 
-        # Inserir dados do cliente
+        #insere dados de cliente
         cursor.execute('INSERT INTO Clientes (nome, morada, telefone) VALUES (?, ?, ?)', (name, address, phone))
-        cliente_id = cursor.lastrowid  # Obtenha o ID do cliente recém-inserido
+        cliente_id = cursor.lastrowid  #obtem o id recem inserido
         print(f"Cliente registrado com ID {cliente_id}")
 
-        # Preparar os dados dos pedidos
+        #dados dos pedidos
         for order in self.orders:
             nome_hamburguer = order.split(' - ')[0]
             quantidade = int(order.split(' x')[1].split(' - ')[0])
-            tamanho = order.split(' - ')[1].lower()  # Converta para minúsculas para facilitar a comparação
+            tamanho = order.split(' - ')[1].lower()
             valor_total = float(order.split(' - ')[2][3:])
 
-            # Verificar se o tamanho é válido
+            #verifica se tamnhao valido
             if tamanho not in ('infantil', 'normal', 'duplo'):
                 print(f"Tamanho de hambúrguer inválido: {tamanho}. Pedido não foi registrado.")
-                continue  # Pule este pedido e passe para o próximo
+                continue
 
-            # Inserir dados do pedido
+            #insere dados pedidos ##erro
             cursor.execute('INSERT INTO Pedidos (id_cliente, nome_hamburguer, quantidade, tamanho, valor_total) VALUES (?, ?, ?, ?, ?)',
                         (cliente_id, nome_hamburguer, quantidade, tamanho, valor_total))
-            pedido_id = cursor.lastrowid  # Obtenha o ID do pedido recém-inserido
+            pedido_id = cursor.lastrowid  #obtem o id recem inserido
             print(f"Pedido registrado com ID {pedido_id} para o cliente {cliente_id}")
 
         conn.commit()
         conn.close()
 
 
-        # Limpar os pedidos e campos de entrada após a confirmação
+        #limpa o pedido apos confirmaçao
         self.orders.clear()
         self.total_price = 0
         self.orders_label.text = 'Seu Pedido:'
@@ -375,7 +360,7 @@ class MyApp(App):
         sm.add_widget(HamburguerDetailsScreen(name='details'))
         sm.add_widget(ReviewOrderScreen(name='review'))
         return sm
-
-
+    
+    
 if __name__ == '__main__':
     MyApp().run()

@@ -4,7 +4,7 @@ import sqlite3
 sql = """
 CREATE TABLE IF NOT EXISTS
     Clientes (
-        id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_cliente INTEGER PRIMARY KEY,
         nome TEXT NOT NULL,
         morada TEXT NOT NULL,
         telefone TEXT NOT NULL

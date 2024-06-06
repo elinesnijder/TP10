@@ -62,7 +62,7 @@ class WelcomeScreen(Screen):
                     #mostra informaçoes dos pedidos
                     orders_layout = BoxLayout(orientation='vertical')
                     for order in orders_data:
-                        order_label = Label(text=f'Pedido ID: {order[0]}, Cliente: {order[1]}, Hambúrguer: {order[2]}, Quantidade: {order[3]}, Tamanho: {order[4]}, Valor: R${order[5]}')
+                        order_label = Label(text=f'Pedido ID: {order[0]}, Cliente: {order[1]}, Hambúrguer: {order[2]}, Quantidade: {order[3]}, Tamanho: {order[4]}, Valor: {order[5]}€')
                         orders_layout.add_widget(order_label)
 
                     self.clear_widgets()
@@ -90,7 +90,7 @@ class WelcomeScreen(Screen):
 
                     hamburguers_layout = BoxLayout(orientation='vertical')
                     for hamburguer in hamburguers_data:
-                        hamburguer_label = Label(text=f'Nome: {hamburguer[0]}, Ingredientes: {hamburguer[1]}, Preço: R${hamburguer[2]}')
+                        hamburguer_label = Label(text=f'Nome: {hamburguer[0]}, Ingredientes: {hamburguer[1]}, Preço: {hamburguer[2]}€')
                         hamburguers_layout.add_widget(hamburguer_label)
 
                     self.clear_widgets()
@@ -141,7 +141,7 @@ class OrderScreen(Screen):
         conn.close()
 
         for hamburguer in hamburguers_data:
-            hamburguer_button = Button(text=f'{hamburguer[0]} - R${hamburguer[1]}',
+            hamburguer_button = Button(text=f'{hamburguer[0]} - {hamburguer[1]}€',
                                        size_hint_y=None,
                                        height=40)
             hamburguer_button.bind(on_press=self.select_hamburguer)
@@ -192,7 +192,7 @@ class HamburguerDetailsScreen(Screen):
         if hamburguer_data:
             self.hamburguer_name_label.text = f'Nome do Hambúrguer: {hamburguer_name}'
             self.hamburguer_ingredients_label.text = f'Ingredientes: {hamburguer_data[0]}'
-            self.hamburguer_price_label.text = f'Preço: R${hamburguer_data[1]}'
+            self.hamburguer_price_label.text = f'Preço: {hamburguer_data[1]}€'
             self.hamburguer_price = hamburguer_data[1]  #armazena o preço
         else:
             self.hamburguer_name_label.text = 'Erro ao carregar detalhes do hambúrguer.'
@@ -229,7 +229,7 @@ class HamburguerDetailsScreen(Screen):
         self.layout.add_widget(quantity_layout)
 
         #preço atual
-        self.total_price_label = Label(text=f'Preço total: R${self.hamburguer_price}')
+        self.total_price_label = Label(text=f'Preço total: {self.hamburguer_price}€')
         self.layout.add_widget(self.total_price_label)
 
         confirm_button = Button(text='Confirmar')
@@ -252,16 +252,16 @@ class HamburguerDetailsScreen(Screen):
     def update_total_price(self):
         quantity = int(self.quantity_label.text)
         total_price = self.hamburguer_price * quantity
-        self.total_price_label.text = f'Preço total: R${total_price}'
+        self.total_price_label.text = f'Preço total: {total_price}€'
 
     def confirm_order(self, instance):
         selected_size = self.size_spinner.text  #obtém o tamanho selcionado do spinner
         quantity = int(self.quantity_label.text)
         total_price = self.hamburguer_price * quantity
         order_screen = self.manager.get_screen('order')
-        order_screen.layout.add_widget(Button(text=f'{self.hamburguer_name} - {selected_size} x{quantity} - R${total_price}'))
+        order_screen.layout.add_widget(Button(text=f'{self.hamburguer_name} - {selected_size} x{quantity} - {total_price}€'))
         review_screen = self.manager.get_screen('review')
-        review_screen.add_order(f'{self.hamburguer_name} - {selected_size} x{quantity} - R${total_price}', total_price)
+        review_screen.add_order(f'{self.hamburguer_name} - {selected_size} x{quantity} - {total_price}€', total_price)
         self.manager.current = 'order'
 
 
@@ -270,7 +270,7 @@ class ReviewOrderScreen(Screen):
         super(ReviewOrderScreen, self).__init__(**kwargs)
         self.layout = BoxLayout(orientation='vertical')
         self.orders_label = Label(text='Seu Pedido:')
-        self.total_price_label = Label(text='Preço total do pedido: R$0')
+        self.total_price_label = Label(text='Preço total do pedido: 0€')
         self.layout.add_widget(self.orders_label)
         self.layout.add_widget(self.total_price_label)
         self.add_widget(self.layout)
@@ -298,7 +298,7 @@ class ReviewOrderScreen(Screen):
         self.orders.append(order_text)
         self.total_price += price
         self.orders_label.text += f'\n{order_text}'
-        self.total_price_label.text = f'Preço total do pedido: R${self.total_price}'
+        self.total_price_label.text = f'Preço total do pedido: {self.total_price}€'
 
     def confirm_order(self, instance):
     #obtem dados clientes
@@ -341,7 +341,7 @@ class ReviewOrderScreen(Screen):
         self.orders.clear()
         self.total_price = 0
         self.orders_label.text = 'Seu Pedido:'
-        self.total_price_label.text = 'Preço total do pedido: R$0'
+        self.total_price_label.text = 'Preço total do pedido: 0€'
         self.name_input.text = ''
         self.address_input.text = ''
         self.phone_input.text = ''

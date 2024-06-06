@@ -347,10 +347,9 @@ class ReviewOrderScreen(Screen):
         self.phone_input.text = ''
 
         self.manager.current = 'welcome'
-
+        
     def go_back(self, instance):
         self.manager.current = 'order'
-
 
 class MyApp(App):
     def build(self):
